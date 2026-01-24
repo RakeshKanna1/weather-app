@@ -1,0 +1,164 @@
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Poppins", sans-serif;
+  background: linear-gradient(135deg, #87cefa, #b0e0e6); /* sky blue → powder blue */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+.app {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.container {
+  width: 95%;
+  max-width: 420px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.15); /* airy glass effect */
+  backdrop-filter: blur(18px);
+  border-radius: 18px;
+  box-shadow: 0 8px 25px rgba(0, 100, 200, 0.2); /* soft blue shadow */
+  color: #ffffff;
+  text-align: center;
+  transition: transform 0.3s ease;
+}
+
+.container:hover {
+  transform: translateY(-4px);
+}
+
+/* Input Box */
+.input-container {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  border: 2px solid #4da6ff;
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.cityInput {
+  flex: 1;
+  border: none;
+  height: 42px;
+  font-size: 16px;
+  outline: none;
+  padding: 10px;
+  background: transparent;
+  color: #fff;
+}
+
+.cityInput::placeholder {
+  color: #e0f7ff;
+}
+
+/* Search Icon */
+.searchicon {
+  height: 28px;
+  width: 28px;
+  cursor: pointer;
+  padding: 8px;
+  filter: invert(1);
+  transition: transform 0.2s;
+}
+
+.searchicon:hover {
+  transform: scale(1.1);
+}
+
+/* Weather Image */
+.weatherimg {
+  height: 120px;
+  width: 120px;
+  margin-top: 15px;
+}
+
+/* Temperature */
+.temp {
+  font-size: 50px;
+  font-weight: 700;
+  margin-top: 10px;
+  background: linear-gradient(45deg, #ffffff, #dff6ff); /* white cloud shine */
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Feels Like */
+.feels-like {
+  font-size: 16px;
+  margin-top: 5px;
+  color: #e6f7ff;
+}
+
+/* Weather Description */
+.description {
+  font-size: 18px;
+  text-transform: capitalize;
+  margin: 5px 0;
+  color: #f0f8ff; /* light cloud white */
+}
+
+/* Location */
+.location {
+  font-size: 22px;
+  font-weight: bold;
+  margin-top: 8px;
+  color: #ffffff;
+}
+
+/* Coordinates */
+.cord {
+  display: flex;
+  justify-content: space-around;
+  margin: 12px 0;
+  font-size: 14px;
+  color: #e0eafc;
+}
+
+/* Weather Data */
+.data-container {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 18px;
+}
+
+.elements img {
+  height: 42px;
+  width: 42px;
+  margin-bottom: 5px;
+}
+
+.text {
+  font-size: 14px;
+  color: #f5faff;
+}
+
+/* Sunrise/Sunset */
+.sun-data {
+  margin-top: 15px;
+  font-size: 14px;
+  color: #eef7ff;
+}
+
+/* Messages */
+.loading-message,
+.error-message,
+.city-not-found {
+  margin-top: 15px;
+  font-size: 18px;
+  color: #ff4d4d;
+}
+
+/* Footer */
+.copyright {
+  margin-top: 15px;
+  font-size: 13px;
+  color: #f0f8ff;
+  opacity: 0.8;
+}
