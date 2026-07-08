@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import "./App.css";
+import Aurora from "./components/Aurora/Aurora";
+import SpotlightCard from "./components/SpotlightCard/SpotlightCard";
 
 // Import icons
 import Search from "./assets/searchicon.png";
@@ -187,7 +189,15 @@ function App() {
 
   return (
     <div className="app">
-      <div className="container">
+      <div className="bg-aurora-wrapper">
+        <Aurora
+          colorStops={["#0052D4", "#4364F7", "#6FB1FC"]}
+          blend={0.5}
+          amplitude={1.0}
+          speed={0.5}
+        />
+      </div>
+      <SpotlightCard spotlightColor="rgba(0, 198, 255, 0.18)">
         <div className="input-container">
           <input
             type="text"
@@ -224,7 +234,7 @@ function App() {
         )}
 
         
-      </div>
+      </SpotlightCard>
     </div>
   );
 }

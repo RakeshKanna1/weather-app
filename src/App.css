@@ -2,35 +2,32 @@ body {
   margin: 0;
   padding: 0;
   font-family: "Poppins", sans-serif;
-  background: linear-gradient(135deg, #87cefa, #b0e0e6); /* sky blue → powder blue */
+  background: #030712; /* Deep dark night sky */
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.bg-aurora-wrapper {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: 0.85;
 }
 
 .app {
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+  width: 100%;
+  height: 100%;
 }
 
-.container {
-  width: 95%;
-  max-width: 420px;
-  padding: 20px;
-  background: rgba(255, 255, 255, 0.15); /* airy glass effect */
-  backdrop-filter: blur(18px);
-  border-radius: 18px;
-  box-shadow: 0 8px 25px rgba(0, 100, 200, 0.2); /* soft blue shadow */
-  color: #ffffff;
-  text-align: center;
-  transition: transform 0.3s ease;
-}
-
-.container:hover {
-  transform: translateY(-4px);
-}
 
 /* Input Box */
 .input-container {
