@@ -127,7 +127,12 @@ function App() {
 
   const search = async () => {
     setLoading(true);
-    let api_key = "8f4587e44b05428d895cf28df09897c2";
+    const api_key = import.meta.env.VITE_OPENWEATHER_API_KEY;
+    if (!api_key) {
+      setError("API Key is missing. Configure VITE_OPENWEATHER_API_KEY in .env");
+      setLoading(false);
+      return;
+    }
     let url = `https://api.openweathermap.org/data/2.5/weather?q=${text}&appid=${api_key}&units=metric`;
 
     try {
