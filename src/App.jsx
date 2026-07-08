@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import "./App.css";
 import Aurora from "./components/Aurora/Aurora";
 import SpotlightCard from "./components/SpotlightCard/SpotlightCard";
+import Particles from "./components/Particles/Particles";
 
 // Import icons
 import Search from "./assets/searchicon.png";
@@ -195,6 +196,19 @@ function App() {
           blend={0.5}
           amplitude={1.0}
           speed={0.5}
+        />
+      </div>
+      <div className="bg-particles-wrapper">
+        <Particles
+          particleColors={["#ffffff", "#e0f7ff", "#a5f3fc"]}
+          particleCount={180}
+          particleSpread={8}
+          speed={0.06}
+          particleBaseSize={100}
+          moveParticlesOnHover={true}
+          particleHoverFactor={0.8}
+          alphaParticles={true}
+          disableRotation={false}
         />
       </div>
       <SpotlightCard spotlightColor="rgba(0, 198, 255, 0.18)">
