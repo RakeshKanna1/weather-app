@@ -4,6 +4,8 @@ import "./App.css";
 import Aurora from "./components/Aurora/Aurora";
 import SpotlightCard from "./components/SpotlightCard/SpotlightCard";
 import Particles from "./components/Particles/Particles";
+import DecryptedText from "./components/DecryptedText/DecryptedText";
+import ShinyText from "./components/ShinyText/ShinyText";
 
 // Import icons
 import Search from "./assets/searchicon.png";
@@ -34,11 +36,15 @@ const WeatherDetails = ({
       <div className="image">
         <img className="weatherimg" src={icon} alt="Weather Icon" />
       </div>
-      <div className="temp">{temp}°C</div>
+      <div className="temp">
+        <ShinyText text={`${temp}°`} color="#ffffff" shineColor="#a5f3fc" speed={3.5} />C
+      </div>
       <div className="feels-like">Feels like: {feelsLike}°C</div>
-      <div className="description">{description}</div>
+      <div className="description">
+        <DecryptedText key={description} text={description} animateOn="view" speed={45} maxIterations={10} />
+      </div>
       <div className="location">
-        {city}, <span>{country}</span>
+        <DecryptedText key={city} text={city} animateOn="view" speed={40} maxIterations={12} />, <span>{country}</span>
       </div>
 
       <div className="cord">
