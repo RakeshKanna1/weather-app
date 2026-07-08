@@ -77,8 +77,14 @@ const WeatherDetails = ({
       </div>
 
       <div className="sun-data">
-        <div>🌅 Sunrise: {sunrise}</div>
-        <div>🌇 Sunset: {sunset}</div>
+        <div>
+          <span className="sun-label">SUNRISE</span>
+          <span className="sun-time">{sunrise}</span>
+        </div>
+        <div>
+          <span className="sun-label">SUNSET</span>
+          <span className="sun-time">{sunset}</span>
+        </div>
       </div>
     </div>
   );
