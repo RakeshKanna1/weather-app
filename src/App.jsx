@@ -1,271 +1,330 @@
-import { useEffect, useState } from "react";
-import PropTypes from "prop-types";
+import { useEffect, useState, useCallback } from "react";
 import "./App.css";
+
+// Dynamic atmospheric background elements
 import Aurora from "./components/Aurora/Aurora";
-import SpotlightCard from "./components/SpotlightCard/SpotlightCard";
 import Particles from "./components/Particles/Particles";
-import DecryptedText from "./components/DecryptedText/DecryptedText";
-import ShinyText from "./components/ShinyText/ShinyText";
+import SpotlightCard from "./components/SpotlightCard/SpotlightCard";
 
-// Import icons
-import Search from "./assets/searchicon.png";
-import humidityIcon from "./assets/humidity.png";
-import windIcon from "./assets/wind.png";
-import snowIcon from "./assets/Snow.png";
-import rainIcon from "./assets/rain.png";
-import clearIcon from "./assets/clear-sky.png";
-import drizzleIcon from "./assets/heavy-rain.png";
-import sunIcon from "./assets/sunny.png";
+// Modular UI components
+import WeatherHeader from "./components/WeatherHeader";
+import CurrentWeatherHero from "./components/CurrentWeatherHero";
+import HourlyForecast from "./components/HourlyForecast";
+import DailyForecast from "./components/DailyForecast";
+import MetricsGrid from "./components/MetricsGrid";
+import AirQualityCard from "./components/AirQualityCard";
 
-const WeatherDetails = ({
-  icon,
-  temp,
-  feelsLike,
-  description,
-  city,
-  country,
-  lat,
-  log,
-  Humidity,
+// Meteorological services and dynamic themes
+import { fetchFullWeather, getWeatherTheme } from "./utils/weatherApi";
+
+// Icons
+import {
+  LayoutDashboard,
+  Calendar,
+  Clock,
   Wind,
-  sunrise,
-  sunset,
-}) => {
-  return (
-    <div className="weather-card">
-      <div className="image">
-        <img className="weatherimg" src={icon} alt="Weather Icon" />
-      </div>
-      <div className="temp">
-        <ShinyText text={`${temp}°`} color="#ffffff" shineColor="#a5f3fc" speed={3.5} />C
-      </div>
-      <div className="feels-like">Feels like: {feelsLike}°C</div>
-      <div className="description">
-        <DecryptedText key={description} text={description} animateOn="view" speed={45} maxIterations={10} />
-      </div>
-      <div className="location">
-        <DecryptedText key={city} text={city} animateOn="view" speed={40} maxIterations={12} />, <span>{country}</span>
-      </div>
+  RefreshCw,
+  AlertCircle,
+  Sparkles,
+} from "lucide-react";
 
-      <div className="cord">
-        <div>
-          <span>Latitude</span>
-          <span>{lat}</span>
-        </div>
-        <div>
-          <span>Longitude</span>
-          <span>{log}</span>
-        </div>
-      </div>
+const DEFAULT_CITY = "Mumbai";
+const RECENT_SEARCHES_KEY = "rakexura_weather_recent_cities";
+const PREFERRED_UNITS_KEY = "rakexura_weather_units";
 
-      <div className="data-container">
-        <div className="elements">
-          <img src={humidityIcon} alt="Humidity" />
-          <div className="data">
-            <div>{Humidity}%</div>
-            <div className="text">Humidity</div>
-          </div>
-        </div>
-
-        <div className="elements">
-          <img src={windIcon} alt="Wind" />
-          <div className="data">
-            <div>{Wind} km/h</div>
-            <div className="text">Wind</div>
-          </div>
-        </div>
-      </div>
-
-      <div className="sun-data">
-        <div>
-          <span className="sun-label">SUNRISE</span>
-          <span className="sun-time">{sunrise}</span>
-        </div>
-        <div>
-          <span className="sun-label">SUNSET</span>
-          <span className="sun-time">{sunset}</span>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-WeatherDetails.propTypes = {
-  icon: PropTypes.string.isRequired,
-  temp: PropTypes.number.isRequired,
-  feelsLike: PropTypes.number.isRequired,
-  description: PropTypes.string.isRequired,
-  city: PropTypes.string.isRequired,
-  country: PropTypes.string.isRequired,
-  Humidity: PropTypes.number.isRequired,
-  Wind: PropTypes.number.isRequired,
-  lat: PropTypes.number.isRequired,
-  log: PropTypes.number.isRequired,
-  sunrise: PropTypes.string.isRequired,
-  sunset: PropTypes.string.isRequired,
-};
-
-function App() {
-  const [text, setText] = useState("mumbai");
-  const [icon, setIcon] = useState(sunIcon);
-  const [temp, setTemp] = useState(0);
-  const [feelsLike, setFeelsLike] = useState(0);
-  const [description, setDescription] = useState("");
-  const [city, setCity] = useState("mumbai");
-  const [country, setCountry] = useState("India");
-  const [lat, setLat] = useState(0);
-  const [log, setLog] = useState(0);
-  const [Humidity, setHumidity] = useState(0);
-  const [Wind, setWind] = useState(0);
-  const [sunrise, setSunrise] = useState("");
-  const [sunset, setSunset] = useState("");
-  const [cityNotFound, setCityNotFound] = useState(false);
+export default function App() {
+  const [searchQuery, setSearchQuery] = useState(DEFAULT_CITY);
+  const [activeCity, setActiveCity] = useState(DEFAULT_CITY);
+  const [weatherData, setWeatherData] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [Error, setError] = useState(null);
+  const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState("overview");
 
-  const weatherIconMap = {
-    "01d": clearIcon,
-    "01n": clearIcon,
-    "02d": clearIcon,
-    "02n": clearIcon,
-    "03d": drizzleIcon,
-    "03n": drizzleIcon,
-    "04d": drizzleIcon,
-    "04n": drizzleIcon,
-    "09d": rainIcon,
-    "09n": rainIcon,
-    "10d": rainIcon,
-    "10n": rainIcon,
-    "13d": snowIcon,
-    "13n": snowIcon,
+  // Temperature unit: 'metric' (°C) or 'imperial' (°F)
+  const [units, setUnits] = useState(() => {
+    return localStorage.getItem(PREFERRED_UNITS_KEY) || "metric";
+  });
+
+  // Recent searches list
+  const [recentSearches, setRecentSearches] = useState(() => {
+    try {
+      const saved = localStorage.getItem(RECENT_SEARCHES_KEY);
+      return saved ? JSON.parse(saved) : ["Mumbai", "London", "Tokyo", "New York"];
+    } catch {
+      return ["Mumbai", "London", "Tokyo", "New York"];
+    }
+  });
+
+  // Dynamic visual theme (Aurora + Particles + Spotlight)
+  const [theme, setTheme] = useState(() => ({
+    auroraColors: ["#0052D4", "#4364F7", "#6FB1FC"],
+    spotlightColor: "rgba(0, 198, 255, 0.18)",
+    particleColors: ["#ffffff", "#e0f7ff", "#a5f3fc"],
+    particleSpeed: 0.06,
+    accentColor: "#00f5d4",
+  }));
+
+  // Add a searched city to recent search history
+  const addRecentSearch = (city) => {
+    if (!city) return;
+    setRecentSearches((prev) => {
+      const filtered = prev.filter((c) => c.toLowerCase() !== city.toLowerCase());
+      const updated = [city, ...filtered].slice(0, 6);
+      try {
+        localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
+      } catch (e) {
+        console.warn("Could not save to localStorage", e);
+      }
+      return updated;
+    });
   };
 
-  const search = async () => {
-    setLoading(true);
-    const api_key = import.meta.env.VITE_OPENWEATHER_API_KEY;
-    if (!api_key) {
-      setError("API Key is missing. Configure VITE_OPENWEATHER_API_KEY in .env");
-      setLoading(false);
+  // Primary weather fetcher
+  const loadWeather = useCallback(
+    async ({ query, lat, lon, targetUnits = units }) => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const data = await fetchFullWeather({
+          query: query || activeCity,
+          lat,
+          lon,
+          units: targetUnits,
+        });
+
+        setWeatherData(data);
+        setActiveCity(data.current.city);
+        setSearchQuery(data.current.city);
+
+        // Update dynamic atmospheric shader theme based on weather conditions
+        const dynamicTheme = getWeatherTheme(data.current.icon, data.current.condition);
+        setTheme(dynamicTheme);
+
+        addRecentSearch(data.current.city);
+      } catch (err) {
+        setError(err.message || "Failed to fetch weather data. Check your connection or city name.");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [activeCity, units]
+  );
+
+  // Handle unit switch (°C <-> °F)
+  const handleToggleUnits = (newUnits) => {
+    if (newUnits === units) return;
+    setUnits(newUnits);
+    localStorage.setItem(PREFERRED_UNITS_KEY, newUnits);
+    loadWeather({ query: activeCity, targetUnits: newUnits });
+  };
+
+  // Handle GPS location detection
+  const handleLocateMe = () => {
+    if (!navigator.geolocation) {
+      setError("Geolocation is not supported by your current browser.");
       return;
     }
-    let url = `https://api.openweathermap.org/data/2.5/weather?q=${text}&appid=${api_key}&units=metric`;
 
-    try {
-      let res = await fetch(url);
-      let data = await res.json();
-      if (data.cod === "404") {
-        setCityNotFound(true);
+    setLoading(true);
+    setError(null);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        loadWeather({ lat: latitude, lon: longitude });
+      },
+      () => {
+        setError("Location permission denied. Please allow location access or search manually.");
         setLoading(false);
-        return;
-      }
-
-      setHumidity(data.main.humidity);
-      setWind(data.wind.speed);
-      setTemp(Math.floor(data.main.temp));
-      setFeelsLike(Math.floor(data.main.feels_like));
-      setDescription(data.weather[0].description);
-      setCity(data.name);
-      setCountry(data.sys.country);
-      setLat(data.coord.lat);
-      setLog(data.coord.lon);
-
-      const weatherIconCode = data.weather[0].icon;
-      setIcon(weatherIconMap[weatherIconCode] || sunIcon);
-
-      // Convert sunrise/sunset to local time
-      const sunriseTime = new Date(data.sys.sunrise * 1000).toLocaleTimeString();
-      const sunsetTime = new Date(data.sys.sunset * 1000).toLocaleTimeString();
-      setSunrise(sunriseTime);
-      setSunset(sunsetTime);
-
-      setCityNotFound(false);
-    } catch (err) {
-      setError("An error occurred while fetching data");
-    } finally {
-      setLoading(false);
-    }
+      },
+      { timeout: 10000, enableHighAccuracy: true }
+    );
   };
 
-  const handleCity = (e) => {
-    setText(e.target.value);
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      search();
-    }
-  };
-
+  // Initial load
   useEffect(() => {
-    search();
+    loadWeather({ query: DEFAULT_CITY });
   }, []);
 
   return (
     <div className="app">
+      {/* 1. Dynamic WebGL Aurora Atmospheric Sky */}
       <div className="bg-aurora-wrapper">
         <Aurora
-          colorStops={["#0052D4", "#4364F7", "#6FB1FC"]}
-          blend={0.5}
-          amplitude={1.0}
+          colorStops={theme.auroraColors}
+          blend={0.55}
+          amplitude={1.1}
           speed={0.5}
         />
       </div>
+
+      {/* 2. Interactive Ambient Particles */}
       <div className="bg-particles-wrapper">
         <Particles
-          particleColors={["#ffffff", "#e0f7ff", "#a5f3fc"]}
-          particleCount={180}
+          particleColors={theme.particleColors}
+          particleCount={160}
           particleSpread={8}
-          speed={0.06}
+          speed={theme.particleSpeed}
           particleBaseSize={100}
           moveParticlesOnHover={true}
-          particleHoverFactor={0.8}
+          particleHoverFactor={0.7}
           alphaParticles={true}
           disableRotation={false}
         />
       </div>
-      <SpotlightCard spotlightColor="rgba(0, 198, 255, 0.18)">
-        <div className="input-container">
-          <input
-            type="text"
-            className="cityInput"
-            placeholder="Search City"
-            onChange={handleCity}
-            value={text}
-            onKeyDown={handleKeyDown}
-          />
-          <div className="search-icon" onClick={search}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="search-svg">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
+
+      {/* 3. Main Glassmorphic Dashboard Card */}
+      <SpotlightCard
+        className="main-dashboard-card"
+        spotlightColor={theme.spotlightColor}
+      >
+        {/* Top Search, Locate & Unit Controls */}
+        <WeatherHeader
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          onSearchSubmit={() => loadWeather({ query: searchQuery })}
+          onLocateMe={handleLocateMe}
+          units={units}
+          onToggleUnits={handleToggleUnits}
+          recentSearches={recentSearches}
+          onSelectCity={(city) => {
+            setSearchQuery(city);
+            loadWeather({ query: city });
+          }}
+          loading={loading}
+        />
+
+        {/* Error Banner */}
+        {error && (
+          <div className="error-banner">
+            <AlertCircle size={18} className="shrink-0" />
+            <span>{error}</span>
           </div>
-        </div>
-
-        {loading && <div className="loading-message">Loading...</div>}
-        {Error && <div className="error-message">{Error}</div>}
-        {cityNotFound && <div className="city-not-found">City Not Found</div>}
-
-        {!loading && !cityNotFound && !Error && (
-          <WeatherDetails
-            icon={icon}
-            temp={temp}
-            feelsLike={feelsLike}
-            description={description}
-            city={city}
-            country={country}
-            lat={lat}
-            log={log}
-            Humidity={Humidity}
-            Wind={Wind}
-            sunrise={sunrise}
-            sunset={sunset}
-          />
         )}
 
-        
+        {/* Loading Skeleton */}
+        {loading && !weatherData && (
+          <div className="loading-skeleton-container">
+            <div className="main-spinner" />
+            <span style={{ fontSize: 14, color: "#94a3b8" }}>
+              Loading weather data...
+            </span>
+          </div>
+        )}
+
+        {/* Weather Content & Multi-Tab System */}
+        {weatherData && (
+          <>
+            {/* Hero Current Weather Card */}
+            <CurrentWeatherHero
+              current={weatherData.current}
+              units={units}
+            />
+
+            {/* Navigation Tabs */}
+            <div className="weather-nav-tabs">
+              <button
+                type="button"
+                className={`tab-btn ${activeTab === "overview" ? "active" : ""}`}
+                onClick={() => setActiveTab("overview")}
+              >
+                <LayoutDashboard size={15} />
+                <span>Overview</span>
+              </button>
+
+              <button
+                type="button"
+                className={`tab-btn ${activeTab === "hourly" ? "active" : ""}`}
+                onClick={() => setActiveTab("hourly")}
+              >
+                <Clock size={15} />
+                <span>24h Hourly</span>
+              </button>
+
+              <button
+                type="button"
+                className={`tab-btn ${activeTab === "forecast" ? "active" : ""}`}
+                onClick={() => setActiveTab("forecast")}
+              >
+                <Calendar size={15} />
+                <span>5-Day Forecast</span>
+              </button>
+
+              {weatherData.airQuality && (
+                <button
+                  type="button"
+                  className={`tab-btn ${activeTab === "air" ? "active" : ""}`}
+                  onClick={() => setActiveTab("air")}
+                >
+                  <Wind size={15} />
+                  <span>Air Quality</span>
+                </button>
+              )}
+            </div>
+
+            {/* Tab 1: Overview */}
+            {activeTab === "overview" && (
+              <>
+                <HourlyForecast
+                  hourly={weatherData.hourly}
+                  unit={units}
+                />
+                <MetricsGrid
+                  current={weatherData.current}
+                  units={units}
+                />
+              </>
+            )}
+
+            {/* Tab 2: Hourly Breakdown */}
+            {activeTab === "hourly" && (
+              <>
+                <HourlyForecast
+                  hourly={weatherData.hourly}
+                  unit={units}
+                />
+                <div style={{ marginTop: 14 }}>
+                  <MetricsGrid
+                    current={weatherData.current}
+                    units={units}
+                  />
+                </div>
+              </>
+            )}
+
+            {/* Tab 3: 5-Day Forecast */}
+            {activeTab === "forecast" && (
+              <DailyForecast daily={weatherData.daily} />
+            )}
+
+            {/* Tab 4: Air Quality & Health Index */}
+            {activeTab === "air" && (
+              <AirQualityCard aqiData={weatherData.airQuality} />
+            )}
+          </>
+        )}
+
+        {/* Dashboard Footer */}
+        <div className="app-footer">
+          <div className="footer-brand">
+            <Sparkles size={14} className="text-cyan-400" />
+            <span>
+              <strong>Rakexura Weather</strong> · Accurate real-time forecasts
+            </span>
+          </div>
+
+          <button
+            type="button"
+            className="footer-refresh-btn"
+            onClick={() => loadWeather({ query: activeCity })}
+            disabled={loading}
+          >
+            <RefreshCw size={12} className={loading ? "animate-spin" : ""} />
+            <span>{loading ? "Updating..." : "Refresh Live"}</span>
+          </button>
+        </div>
       </SpotlightCard>
     </div>
   );
 }
-
-export default App;
