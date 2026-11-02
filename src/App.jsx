@@ -25,11 +25,9 @@ import {
   Wind,
   RefreshCw,
   AlertCircle,
-  Sparkles,
 } from "lucide-react";
 
 const DEFAULT_CITY = "Mumbai";
-const RECENT_SEARCHES_KEY = "rakexura_weather_recent_cities";
 const PREFERRED_UNITS_KEY = "rakexura_weather_units";
 
 export default function App() {
@@ -45,16 +43,6 @@ export default function App() {
     return localStorage.getItem(PREFERRED_UNITS_KEY) || "metric";
   });
 
-  // Recent searches list
-  const [recentSearches, setRecentSearches] = useState(() => {
-    try {
-      const saved = localStorage.getItem(RECENT_SEARCHES_KEY);
-      return saved ? JSON.parse(saved) : ["Mumbai", "London", "Tokyo", "New York"];
-    } catch {
-      return ["Mumbai", "London", "Tokyo", "New York"];
-    }
-  });
-
   // Dynamic visual theme (Aurora + Particles + Spotlight)
   const [theme, setTheme] = useState(() => ({
     auroraColors: ["#0052D4", "#4364F7", "#6FB1FC"],
@@ -63,21 +51,6 @@ export default function App() {
     particleSpeed: 0.06,
     accentColor: "#00f5d4",
   }));
-
-  // Add a searched city to recent search history
-  const addRecentSearch = (city) => {
-    if (!city) return;
-    setRecentSearches((prev) => {
-      const filtered = prev.filter((c) => c.toLowerCase() !== city.toLowerCase());
-      const updated = [city, ...filtered].slice(0, 6);
-      try {
-        localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
-      } catch (e) {
-        console.warn("Could not save to localStorage", e);
-      }
-      return updated;
-    });
-  };
 
   // Primary weather fetcher
   const loadWeather = useCallback(
@@ -100,8 +73,6 @@ export default function App() {
         // Update dynamic atmospheric shader theme based on weather conditions
         const dynamicTheme = getWeatherTheme(data.current.icon, data.current.condition);
         setTheme(dynamicTheme);
-
-        addRecentSearch(data.current.city);
       } catch (err) {
         setError(err.message || "Failed to fetch weather data. Check your connection or city name.");
       } finally {
@@ -187,11 +158,6 @@ export default function App() {
           onLocateMe={handleLocateMe}
           units={units}
           onToggleUnits={handleToggleUnits}
-          recentSearches={recentSearches}
-          onSelectCity={(city) => {
-            setSearchQuery(city);
-            loadWeather({ query: city });
-          }}
           loading={loading}
         />
 
@@ -308,7 +274,6 @@ export default function App() {
         {/* Dashboard Footer */}
         <div className="app-footer">
           <div className="footer-brand">
-            <Sparkles size={14} className="text-cyan-400" />
             <span>
               <strong>Rakexura Weather</strong> · Accurate real-time forecasts
             </span>

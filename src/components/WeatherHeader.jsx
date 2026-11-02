@@ -1,8 +1,6 @@
 import { useState } from "react";
 import PropTypes from "prop-types";
-import { Search, MapPin, X, Clock, Flame } from "lucide-react";
-
-const POPULAR_CITIES = ["Mumbai", "London", "New York", "Tokyo", "Dubai", "Paris"];
+import { Search, MapPin, X } from "lucide-react";
 
 export default function WeatherHeader({
   searchQuery,
@@ -11,8 +9,6 @@ export default function WeatherHeader({
   onLocateMe,
   units,
   onToggleUnits,
-  recentSearches = [],
-  onSelectCity,
   loading = false,
 }) {
   const [isFocused, setIsFocused] = useState(false);
@@ -25,7 +21,7 @@ export default function WeatherHeader({
 
   return (
     <div className="weather-header-container">
-      {/* Search Bar & Action Bar */}
+      {/* Search Bar & Action Controls */}
       <div className="search-action-row">
         <div className={`search-input-box ${isFocused ? "focused" : ""}`}>
           <Search size={18} className="search-lead-icon" />
@@ -69,7 +65,7 @@ export default function WeatherHeader({
           title="Detect Current Location"
           disabled={loading}
         >
-          <MapPin size={18} />
+          <MapPin size={17} />
           <span className="locate-label">My Location</span>
         </button>
 
@@ -91,39 +87,6 @@ export default function WeatherHeader({
           </button>
         </div>
       </div>
-
-      {/* Quick City Presets & Recent Searches */}
-      <div className="quick-cities-row">
-        <div className="chips-group">
-          <span className="chips-label">Popular:</span>
-          {POPULAR_CITIES.map((city) => (
-            <button
-              key={city}
-              type="button"
-              className="city-chip"
-              onClick={() => onSelectCity(city)}
-            >
-              {city}
-            </button>
-          ))}
-        </div>
-
-        {recentSearches.length > 0 && (
-          <div className="chips-group recent">
-            <span className="chips-label">Recent:</span>
-            {recentSearches.slice(0, 4).map((city) => (
-              <button
-                key={city}
-                type="button"
-                className="city-chip recent-chip"
-                onClick={() => onSelectCity(city)}
-              >
-                {city}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
     </div>
   );
 }
@@ -135,7 +98,5 @@ WeatherHeader.propTypes = {
   onLocateMe: PropTypes.func.isRequired,
   units: PropTypes.string.isRequired,
   onToggleUnits: PropTypes.func.isRequired,
-  recentSearches: PropTypes.array,
-  onSelectCity: PropTypes.func.isRequired,
   loading: PropTypes.bool,
 };
